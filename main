@@ -1,0 +1,214 @@
+#include "includes.h"
+
+bool DeleteAll = false;
+int menu = 0, MenuNew;      //= 0 Hauptmenü     =1 Spiel   =2 Minitutorial   =3 Schnelles Spiel   =4 Eigenes Spiel   =5 Optionen  =6 Credits   =7 Beenden   =8 Zum Hauptmenü zurück    =9 Neues Spiel beginnen
+int TutorialStep = -1;
+
+void DeleteEveryThing(int NewMenu, bool Before)
+{
+    if (Before == true)
+    {
+        MenuNew = NewMenu;
+        DeleteAll = true;
+        ManageFilter(2, CONSTANT, 255);
+        ManageFilter(0, CONSTANT, 0);
+        ManageFilter(1, CONSTANT, 0);
+    }
+    else
+    {
+        for (int i=0; i<MaxGUIElements; i++)
+        {
+            if (GUIElements[i] != NULL)
+            {
+                if (i == 14)
+                    PlayerType[i-14] = (*GUIElements[i]).TextActive;
+                else if (i == 15)
+                    PlayerType[i-14] = ((*GUIElements[i]).TextActive ^ 1);
+                else if ((i >= 16) && (i <= 29))
+                {
+                    if ((*GUIElements[i]).TextActive == 0)
+                        PlayerType[i-14] = -1;
+                    else
+                        PlayerType[i-14] = (((*GUIElements[i]).TextActive-1) ^ 1);
+                }
+                delete GUIElements[i];
+                GUIElements[i] = NULL;
+            }
+        }
+        LetterCount = 0;
+        ManageFilter(2, CONSTANT, 0);
+        DeleteAll = false;
+        menu = MenuNew;
+        if (((menu <= 6) && (menu != 1)) || (menu == 9))
+            Menus();
+        if (menu == 7)
+            DestroyWindow(WinHwnd);
+    }
+}
+
+const int MaxTutorialTexts = 13;
+int TutorialTexts[10][MaxTutorialTexts] = {{3, 51, 52, 53, 54, 64, 96, 97,-1,0,0,0,0}, {55, 56, 57, 58, 59, 60, 61,62,63, -1,0,0,0}, {65,66,67,68,69,70,71,72,73,74,75,76,77}, {78,79,80,81,82,83,84,85,86,87,88,-1,0},{89,90,91,92,93,94,95,-1,0,0,0,0,0},{98,99,100,101,102,103,104,105,-1},{108,109,110,111,112,-1},{113,114,115,116,117,118,119,120,121,122,123,124,-1},{125,126,127,128,-1},{129,130,131,132,133,-1}};
+
+void TutorialDraw(void)
+{
+    ManageFilter(0, CONSTANT, 150);
+    PlayerWon = 0;
+    NewText(20,470,720,57, &TextData[TutorialTexts[TutorialStep][0] ][0], true);
+    for (int i=1; i<MaxTutorialTexts; i++)
+    {
+        if (TutorialTexts[TutorialStep][i] == -1)
+            break;
+        NewText(20,350-25*(i-1),720,23, &TextData[TutorialTexts[TutorialStep][i] ][0], false);
+    }
+    GUIElements[51] = new GUI(51,false,300,20,149,43,2);
+}
+
+void Menus(void)
+{
+    if (menu == 0)
+    {
+        for (int i=0; i<6; i++)
+            GUIElements[i+1] = new GUI(i+1,false,238,(5-i)*50+50,250,32,3+i);
+        NewText(20,450,720,87, &TextData[9][0], true);
+    }
+    if (menu == 2)
+    {
+        RoundNr = 1;
+        CardDecksCount = 1;
+        for (int i=0; i<2; i++)
+        {
+            for (int j=0; j<128; j++)
+            {
+                WriteData[30+i][j] = TextData[106+i][j];
+                if (TextData[106+i][j] == 0)
+                    break;
+            }
+        }
+        PlayerType[0] = 0;
+        PlayerType[1] = 1;
+        PlayerType[2] = -1;
+        SeeAll = false;
+        TutorialStep = 0;
+        RoundResultCount = 0;
+        menu = 9;
+    }
+    if (menu == 3)
+    {
+        TutorialStep = -1;
+        RoundNr = 1;
+        CardDecksCount = 1;
+        WriteData[30][0] = 0;
+        WriteData[31][0] = 0;
+        PlayerType[0] = 0;
+        PlayerType[1] = 1;
+        PlayerType[2] = -1;
+        SeeAll = false;
+        RoundResultCount = 0;
+        menu = 9;
+    }
+    if (menu == 4)
+    {
+        TutorialStep = -1;
+        for (int i=0; i<16; i++)
+        {
+            if (i == 0)
+                GUIElements[i+14] = new GUI(i+14,false,10+90*(i%8),350-(i/8)*80,80,23,32,31);
+            else if (i == 1)
+                GUIElements[i+14] = new GUI(i+14,false,10+90*(i%8),350-(i/8)*80,80,23,31,32);
+            else
+                GUIElements[i+14] = new GUI(i+14,false,10+90*(i%8),350-(i/8)*80,80,23,30,31,32);
+            if (i > 2)
+                (*GUIElements[i+14]).Status = 3;
+            GUIElements[i+14+16] = new GUI(i+14+16,true,10+90*(i%8),320-(i/8)*80,80,23,29);
+        }
+        GUIElements[0] = new GUI(0,false,450,20,200,43,40);
+        GUIElements[13] = new GUI(13,false,100,20,200,43,39);
+        CardDecksCount = 1;
+        GUIElements[46] = new GUI(46,false,120,150,200,23,33,34,35);
+        RoundNr = 1;
+        GUIElements[47] = new GUI(47,false,400,150,200,23,36,37,38);
+        SeeAll = false;
+        GUIElements[49] = new GUI(49,false,175,120,350,23,44,45);
+        NewText(20,450,720,87, &TextData[5][0], true);
+        RoundResultCount = 0;
+    }
+    if (menu == 5)
+    {
+        GUIElements[7] = new GUI(7,false,70,370,230,27,10,11);
+        GUIElements[8] = new GUI(8,false,330,390,230,27,12,13);
+        GUIElements[9] = new GUI(9,false,330,350,230,27,14,15);
+        if (ChosenPic == -1)
+        {
+            (*GUIElements[7]).TextActive ++;
+            (*GUIElements[8]).Status = 3;
+        }
+        else
+            (*GUIElements[9]).Status = 3;
+        GUIElements[10] = new GUI(10,false,70,200,610,27,16,17);
+        if (FPSDraw == false)
+            (*GUIElements[10]).TextActive = 1;
+        GUIElements[11] = new GUI(11,false,70,150,610,27,19,20,21);
+        (*GUIElements[11]).TextActive = SpeedPlus/3-1;
+        GUIElements[48] = new GUI(48,false,70,100,610,27,43,43);
+        (*GUIElements[48]).TextActive = Language;
+        GUIElements[52] = new GUI(52,false,70,250,610,27,138,137);
+        (*GUIElements[52]).TextActive = Sounds;
+        GUIElements[53] = new GUI(53,false,70,300,610,27,134,135,136);
+        (*GUIElements[53]).TextActive = Music;
+        GUIElements[0] = new GUI(0,false,300,20,149,43,2);
+        NewText(20,450,720,87, &TextData[6][0], true);
+    }
+    if (menu == 6)
+    {
+        GUIElements[0] = new GUI(0,false,300,20,149,43,2);
+        NewText(20,450,720,87, &TextData[7][0], true);
+        NewText(20,380,720,25, &TextData[22][0], false, false, true);
+        NewText(20,320,720,25, &TextData[23][0], false, false, true);
+        NewText(20,260,720,25, &TextData[46][0], false, false, true);
+        NewText(20,200,720,25, &TextData[47][0], false, false, true);
+        NewText(20,140,720,25, &TextData[24][0], false, false, true);
+        NewText(20,115,720,25, &TextData[25][0], false, false, true);
+    }
+    if (menu == 8)
+    {
+        NewText(20,450,720,50, &TextData[26][0], true);
+        GUIElements[0] = new GUI(0,false,109,50,144,50,27);
+        GUIElements[12] = new GUI(12,false,503,50,144,50,28);
+    }
+    if (menu == 9)
+    {
+        players = 16;
+        for (int i=0; i<16; i++)
+        {
+            if (PlayerType[i] == -1)
+            {
+                players = i;
+                break;
+            }
+            if (WriteData[i+30][0] == 0)
+            {
+                for (int j=0; j<128; j++)
+                {
+                    WriteData[i+30][j] = TextData[41+PlayerType[i]][j];
+                    if (WriteData[i+30][j] == 88)
+                        WriteData[i+30][j] = i+65;
+                    if (WriteData[i+30][j] == 0)
+                        break;
+                }
+            }
+        }
+        int PlayerCount = 0;
+        for (int i=0; i<players; i++)
+        {
+            if (PlayerType[i] == 0)
+                PlayerCount++;
+        }
+        HumanPlayerMore = false;
+        if (PlayerCount > 1)
+            HumanPlayerMore = true;
+        StartGame();
+        if (TutorialStep == 0)
+            TutorialDraw();
+        menu = 1;
+    }
+}
